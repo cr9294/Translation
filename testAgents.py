@@ -192,7 +192,7 @@ print(result)
 
 # 4. Excel处理函数更新
 def process_excel_batch() -> list:
-    df = pd.read_excel('google_text.xlsx')
+    df = pd.read_excel('google.xlsx')
     results = []
 
     for _, row in df.iterrows():
@@ -212,7 +212,7 @@ def process_excel_batch() -> list:
         })
 
     results_df = pd.DataFrame(results)
-    results_df.to_excel('evaluation_results.xlsx', index=False)
+    results_df.to_excel('1_evaluation_results.xlsx', index=False)
     return results
 
 if __name__ == "__main__":
@@ -232,4 +232,4 @@ if __name__ == "__main__":
     
     # 批量处理Excel文件
     results = process_excel_batch()
-    print("评估完成，结果已保存到 evaluation_results.xlsx")
+    print("评估完成，结果已保存到 1_evaluation_results.xlsx")

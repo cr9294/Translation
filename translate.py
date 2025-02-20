@@ -13,9 +13,9 @@ class TranslationState(BaseModel):
 # 定义智能体
 llm = ChatOpenAI(
     temperature=0.2, 
-    model_name="gpt-4o-mini",
-    base_url="https://api.tu-zi.com/v1",
-    api_key="sk-PEvjpQELoLDQqNX75f8c457d2cC244E4846a4c13C497Fd73"
+    model_name="gpt-3.5-turbo-0125",
+    base_url="https://free.v36.cm/v1",
+    api_key="sk-JYEqiFja0N5GaUWYD1Ea425f85Bd4e459b195f616957919b"
 )
 
 # 翻译指令模板

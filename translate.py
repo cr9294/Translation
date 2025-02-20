@@ -30,6 +30,35 @@ translate_prompt = ChatPromptTemplate.from_messages([
     ("human", "{text}"),
 ])
 
+# 意译模板（暂时注释）
+"""
+free_translate_prompt = ChatPromptTemplate.from_messages([
+    ("system", '''你是一位专业的中英互译专家。请将以下中文文本意译成英文。
+    要求：
+    1. 使用地道的英语表达方式重组句子
+    2. 可以调整语序，确保表达自然流畅
+    3. 可以适当调整词语，只要保持原意
+    4. 注重表达效果，确保英文读者容易理解
+    '''),
+    ("human", "{text}"),
+])
+"""
+
+# 专业词汇翻译模板（暂时注释）
+"""
+technical_translate_prompt = ChatPromptTemplate.from_messages([
+    ("system", '''你是一位专业的中英互译专家。请将以下中文文本翻译成英文，特别注意专业术语的处理。
+    要求：
+    1. 准确识别并保留专业术语和技术词汇
+    2. 对专业术语使用行业通用的标准英文翻译
+    3. 在保持专业性的同时确保句子通顺
+    4. 如遇到新兴技术词汇，优先使用业内认可的英文表达
+    5. 可以在翻译时加入常用缩写(如 AI, ML, DL 等)
+    '''),
+    ("human", "{text}"),
+])
+"""
+
 # 定义翻译函数
 def translate_text(state: TranslationState) -> TranslationState:
     translation_response = translator.invoke({"text": state.text})

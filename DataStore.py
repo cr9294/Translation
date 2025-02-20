@@ -1,0 +1,72 @@
+from datasets import load_dataset
+import pandas as pd
+import re
+
+def is_valid_text(text):
+    """检查文本是否有效（不含乱码且格式正确）"""
+    # 检查是否包含过多特殊字符
+    special_char_ratio = len(re.findall(r'[^\u4e00-\u9fff\w。，、；：""（）《》？！]', text)) / len(text)
+    if special_char_ratio > 0.1:  # 特殊字符比例超过10%视为异常
+        return False
+    
+    # 检查中文字符比例
+    chinese_char_count = len(re.findall(r'[\u4e00-\u9fff]', text))
+    if chinese_char_count / len(text) < 0.5:  # 中文字符少于50%视为异常
+        return False
+    
+    return True
+
+def truncate_content(content, max_length=1000):
+    """将超过最大长度的文本截断到最近的句号"""
+    if len(content) <= max_length:
+        return content
+    
+    last_period = content[:max_length].rstrip().rfind('。')
+    if last_period == -1:
+        return content[:max_length]
+    return content[:last_period + 1]
+
+# 加载数据集，使用流式加载
+ds = load_dataset("BAAI/IndustryCorpus2_finance_economics", streaming=True)
+# ds = load_dataset("BAAI/IndustryCorpus2_film_entertainment")
+# ds = load_dataset("BAAI/IndustryCorpus2_literature_emotion")
+
+# 只获取前5000条数据进行处理
+initial_data = list(ds['train'].take(5000))
+
+# 处理和筛选数据
+filtered_contents = []
+count = 0
+invalid_count = 0
+
+for item in initial_data:
+    if count >= 3000:
+        break
+    
+    text = item['text']
+    
+    # 内容长度检查
+    if len(text) < 300:
+        invalid_count += 1
+        continue
+        
+    # 检查文本质量
+    if not is_valid_text(text):
+        invalid_count += 1
+        continue
+        
+    # 长度截断
+    if len(text) > 1000:
+        text = truncate_content(text)
+        
+    filtered_contents.append({'text': text})
+    count += 1
+
+# 转换为DataFrame
+df = pd.DataFrame(filtered_contents)
+
+# 保存为Excel文件
+df.to_excel('raw_data_3000.xlsx', index=False)
+print(f"数据已保存到 raw_data_3000.xlsx")
+print(f"处理完成，共保存 {len(filtered_contents)} 条有效数据")
+print(f"已过滤 {invalid_count} 条无效或不合格数据")

@@ -1,5 +1,22 @@
 import json
 import pandas as pd
+import re
+
+def is_valid_text(text):
+    """
+    检查文本是否有效（不含乱码且格式正确）
+    """
+    # 检查是否包含过多特殊字符
+    special_char_ratio = len(re.findall(r'[^\u4e00-\u9fff\w。，、；：""（）《》？！]', text)) / len(text)
+    if special_char_ratio > 0.1:  # 特殊字符比例超过10%视为异常
+        return False
+    
+    # 检查中文字符比例
+    chinese_char_count = len(re.findall(r'[\u4e00-\u9fff]', text))
+    if chinese_char_count / len(text) < 0.5:  # 中文字符少于50%视为异常
+        return False
+    
+    return True
 
 def truncate_content(content, max_length=1000):
     """
@@ -19,18 +36,24 @@ def process_json_data():
     
     with open('news2016zh_valid.json', 'r', encoding='utf-8') as f:
         count = 0
+        invalid_count = 0
         for line in f:
-            if count >= 500:
+            if count >= 3000:
                 break
             try:
                 data = json.loads(line.strip())
                 content = data.get('content', '')
                 
-                # 如果内容长度小于300，跳过
+                # 内容长度检查
                 if len(content) < 300:
                     continue
                 
-                # 如果内容超过1000，进行智能截断
+                # 检查文本质量
+                if not is_valid_text(content):
+                    invalid_count += 1
+                    continue
+                
+                # 长度截断
                 if len(content) > 1000:
                     content = truncate_content(content)
                 
@@ -38,16 +61,17 @@ def process_json_data():
                     'content': content
                 })
                 count += 1
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, UnicodeError):
+                invalid_count += 1
                 continue
 
-    # 创建DataFrame，设置中文列名
+    # 创建DataFrame并保存
     df = pd.DataFrame(filtered_contents)
-    df.columns = ['Chinese']  # 将'content'改为'文本内容'
+    df.columns = ['Chinese']
     
-    # 保存为Excel
     df.to_excel('filtered_contents.xlsx', index=False)
-    print(f"处理完成，共保存 {len(filtered_contents)} 条数据")
+    print(f"处理完成，共保存 {len(filtered_contents)} 条有效数据")
+    print(f"已过滤 {invalid_count} 条无效或含乱码数据")
 
 if __name__ == "__main__":
     process_json_data()

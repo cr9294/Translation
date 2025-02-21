@@ -36,10 +36,10 @@ evaluate_prompt = ChatPromptTemplate.from_messages([
     评估格式要求：
     1. 首先给出两个翻译的分数（0-100分）
     2. 说明哪个翻译更好
-    3. 用3-4句话解释原因
+    3. 用3-4句话解释原因，并指出具体哪个单词或词句更好
     
     输出格式示例：
-    LLM翻译85分，谷歌翻译90分，谷歌翻译更好。原因：谷歌翻译语言更自然流畅，句子结构更符合英语表达习惯。因为："""),
+    LLM翻译85分，谷歌翻译90分，谷歌翻译更好。原因：谷歌翻译语言更自然流畅，句子结构更符合英语表达习惯。例如，谷歌翻译中的“example phrase”比LLM翻译中的“sample phrase”更准确。"""),
 ])
 evaluator = evaluate_prompt | llm
 
@@ -71,7 +71,7 @@ def evaluate_translations(state: TranslationState) -> TranslationState:
     
     return state
 
-def process_excel_batch() -> list:
+def process_excel_batch(evaluated_prompt) -> list:
     """批量处理Excel文件中的翻译评估"""
     df = pd.read_excel('translations_result_google_test.xlsx')
     results = []
@@ -86,6 +86,7 @@ def process_excel_batch() -> list:
         evaluated_state = evaluate_translations(state)
         
         results.append({
+            'Prompt': evaluated_prompt,
             'Original': state.original_text,
             'Human Translation': state.human_translation,
             'Google Translation': state.google_translation,
@@ -96,49 +97,49 @@ def process_excel_batch() -> list:
     results_df.to_excel('evaluation_results.xlsx', index=False)
     return results_df
 
-def visualize_results(df: pd.DataFrame):
-    """生成评估结果的可视化图表"""
-    plt.style.use('seaborn')
+# def visualize_results(df: pd.DataFrame):
+#     """生成评估结果的可视化图表"""
+#     plt.style.use('seaborn')
     
-    # 创建图形
-    fig = plt.figure(figsize=(15, 10))
+#     # 创建图形
+#     fig = plt.figure(figsize=(15, 10))
     
-    # 1. 分数对比箱型图
-    plt.subplot(2, 2, 1)
-    scores_data = pd.DataFrame({
-        'Human': df['Human Score'],
-        'Google': df['Google Score']
-    })
-    sns.boxplot(data=scores_data)
-    plt.title('翻译分数分布对比')
-    plt.ylabel('分数')
+#     # 1. 分数对比箱型图
+#     plt.subplot(2, 2, 1)
+#     scores_data = pd.DataFrame({
+#         'Human': df['Human Score'],
+#         'Google': df['Google Score']
+#     })
+#     sns.boxplot(data=scores_data)
+#     plt.title('翻译分数分布对比')
+#     plt.ylabel('分数')
     
-    # 2. 更好翻译来源统计
-    plt.subplot(2, 2, 2)
-    better_counts = df['Better Translation'].value_counts()
-    plt.pie(better_counts, labels=better_counts.index, autopct='%1.1f%%')
-    plt.title('更好翻译来源占比')
+#     # 2. 更好翻译来源统计
+#     plt.subplot(2, 2, 2)
+#     better_counts = df['Better Translation'].value_counts()
+#     plt.pie(better_counts, labels=better_counts.index, autopct='%1.1f%%')
+#     plt.title('更好翻译来源占比')
     
-    # 3. 分数差异直方图
-    plt.subplot(2, 2, 3)
-    score_diff = df['Human Score'] - df['Google Score']
-    sns.histplot(score_diff, bins=20)
-    plt.title('人工译文与谷歌译文分数差异分布')
-    plt.xlabel('分数差异 (人工 - 谷歌)')
+#     # 3. 分数差异直方图
+#     plt.subplot(2, 2, 3)
+#     score_diff = df['Human Score'] - df['Google Score']
+#     sns.histplot(score_diff, bins=20)
+#     plt.title('人工译文与谷歌译文分数差异分布')
+#     plt.xlabel('分数差异 (人工 - 谷歌)')
     
-    # 4. 分数相关性散点图
-    plt.subplot(2, 2, 4)
-    sns.scatterplot(data=df, x='Human Score', y='Google Score')
-    plt.title('人工译文与谷歌译文分数相关性')
+#     # 4. 分数相关性散点图
+#     plt.subplot(2, 2, 4)
+#     sns.scatterplot(data=df, x='Human Score', y='Google Score')
+#     plt.title('人工译文与谷歌译文分数相关性')
     
-    plt.tight_layout()
-    plt.savefig('translation_evaluation_analysis.png')
-    plt.close()
+#     plt.tight_layout()
+#     plt.savefig('translation_evaluation_analysis.png')
+#     plt.close()
 
 if __name__ == "__main__":
     # 批量评估并生成可视化
     results_df = process_excel_batch()
-    visualize_results(results_df)
+    # visualize_results(results_df)
     
     # 打印统计摘要
     print("\n=== 评估统计摘要 ===")

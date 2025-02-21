@@ -40,7 +40,7 @@ count = 0
 invalid_count = 0
 
 for item in initial_data:
-    if count >= 3000:
+    if count >= 100:
         break
     
     text = item['text']
@@ -59,14 +59,15 @@ for item in initial_data:
     if len(text) > 1000:
         text = truncate_content(text)
         
-    filtered_contents.append({'text': text})
+    filtered_contents.append({'Chinese': text})
     count += 1
 
 # 转换为DataFrame
 df = pd.DataFrame(filtered_contents)
 
+filename = 'test_100.xlsx'
 # 保存为Excel文件
-df.to_excel('raw_data_3000.xlsx', index=False)
-print(f"数据已保存到 raw_data_3000.xlsx")
+df.to_excel(filename, index=False)
+print(f"{filename}")
 print(f"处理完成，共保存 {len(filtered_contents)} 条有效数据")
 print(f"已过滤 {invalid_count} 条无效或不合格数据")

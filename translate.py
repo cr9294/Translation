@@ -32,7 +32,7 @@ translate_prompt = ChatPromptTemplate.from_messages([
 
 # 意译模板（暂时注释）
 """
-free_translate_prompt = ChatPromptTemplate.from_messages([
+translate_prompt = ChatPromptTemplate.from_messages([
     ("system", '''你是一位专业的中英互译专家。请将以下中文文本意译成英文。
     要求：
     1. 使用地道的英语表达方式重组句子
@@ -46,7 +46,7 @@ free_translate_prompt = ChatPromptTemplate.from_messages([
 
 # 专业词汇翻译模板（暂时注释）
 """
-technical_translate_prompt = ChatPromptTemplate.from_messages([
+translate_prompt = ChatPromptTemplate.from_messages([
     ("system", '''你是一位专业的中英互译专家。请将以下中文文本翻译成英文，特别注意专业术语的处理。
     要求：
     1. 准确识别并保留专业术语和技术词汇
@@ -83,10 +83,11 @@ def process_translations(file_path: str):
         results.append(result["translation"])  # 使用字典索引而不是属性访问
     
     df['English'] = results
-    df.to_excel('translations_result.xlsx', index=False)
-    print("翻译完成，结果已保存到 translations_result.xlsx")
+    filename = "translations_test_100.xlsx"
+    df.to_excel(filename, index=False)
+    print(f"翻译完成，结果已保存到 {filename}")
 
 translator = translate_prompt | llm
 
 if __name__ == "__main__":
-    process_translations("filtered_contents.xlsx")  # 替换为实际的Excel文件路径
+    process_translations("test_100.xlsx")  # 替换为实际的Excel文件路径

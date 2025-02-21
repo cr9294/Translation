@@ -1,7 +1,5 @@
 import pandas as pd
 import re
-import matplotlib.pyplot as plt
-import seaborn as sns
 from typing import Optional, Dict, List, Tuple
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
@@ -24,9 +22,9 @@ class TranslationState(BaseModel):
 # 初始化 LLM
 llm = ChatOpenAI(
     temperature=0.2, 
-    model_name="gpt-3.5-turbo-0125",
-    base_url="https://free.v36.cm/v1",
-    api_key="sk-JYEqiFja0N5GaUWYD1Ea425f85Bd4e459b195f616957919b"
+    model_name="gpt-3.5-turbo-1106",
+    base_url="https://api.chatanywhere.tech/v1",
+    api_key="sk-AtjQFIBglEgUp1UQoKl4qIXp18UKRqXCQRMp815RUlviQH4X"
 )
 
 # 评估智能体
@@ -51,7 +49,7 @@ def parse_evaluation(evaluation_text: str) -> Tuple[float, float, str]:
     google_score = float(scores[1]) if len(scores) > 1 else 0
     
     # 判断哪个更好
-    better = "人工翻译" if "人工翻译更好" in evaluation_text else "谷歌翻译"
+    better = "大模型翻译" if "大模型翻译更好" in evaluation_text else "谷歌翻译"
     
     return human_score, google_score, better
 
@@ -73,8 +71,18 @@ def evaluate_translations(state: TranslationState) -> TranslationState:
 
 def process_excel_batch(evaluated_prompt) -> list:
     """批量处理Excel文件中的翻译评估"""
-    df = pd.read_excel('translations_result_google_test.xlsx')
+    df = pd.read_excel('./out/translations_test_100_google.xlsx')
     results = []
+    
+    # 获取指令文本
+    prompt_text = """
+                    你是一位专业的中英互译专家。请将以下中文文本直译成英文。
+                    要求：
+                    1. 严格按照原文的字面意思进行翻译
+                    2. 保持原文的语序结构
+                    3. 不要添加任何解释或意译
+                    4. 确保每个词语都得到准确对应的翻译
+                  """
 
     for _, row in df.iterrows():
         state = TranslationState(
@@ -86,67 +94,22 @@ def process_excel_batch(evaluated_prompt) -> list:
         evaluated_state = evaluate_translations(state)
         
         results.append({
-            'Prompt': evaluated_prompt,
+            'Prompt': prompt_text,  # 只存储指令文本
             'Original': state.original_text,
-            'Human Translation': state.human_translation,
+            'LLM Translation': state.human_translation,
             'Google Translation': state.google_translation,
             'Evaluation': state.evaluation_feedback,
         })
 
     results_df = pd.DataFrame(results)
-    results_df.to_excel('evaluation_results.xlsx', index=False)
+    results_df.to_excel('./out/evaluation_results_100.xlsx', index=False)
     return results_df
 
-# def visualize_results(df: pd.DataFrame):
-#     """生成评估结果的可视化图表"""
-#     plt.style.use('seaborn')
-    
-#     # 创建图形
-#     fig = plt.figure(figsize=(15, 10))
-    
-#     # 1. 分数对比箱型图
-#     plt.subplot(2, 2, 1)
-#     scores_data = pd.DataFrame({
-#         'Human': df['Human Score'],
-#         'Google': df['Google Score']
-#     })
-#     sns.boxplot(data=scores_data)
-#     plt.title('翻译分数分布对比')
-#     plt.ylabel('分数')
-    
-#     # 2. 更好翻译来源统计
-#     plt.subplot(2, 2, 2)
-#     better_counts = df['Better Translation'].value_counts()
-#     plt.pie(better_counts, labels=better_counts.index, autopct='%1.1f%%')
-#     plt.title('更好翻译来源占比')
-    
-#     # 3. 分数差异直方图
-#     plt.subplot(2, 2, 3)
-#     score_diff = df['Human Score'] - df['Google Score']
-#     sns.histplot(score_diff, bins=20)
-#     plt.title('人工译文与谷歌译文分数差异分布')
-#     plt.xlabel('分数差异 (人工 - 谷歌)')
-    
-#     # 4. 分数相关性散点图
-#     plt.subplot(2, 2, 4)
-#     sns.scatterplot(data=df, x='Human Score', y='Google Score')
-#     plt.title('人工译文与谷歌译文分数相关性')
-    
-#     plt.tight_layout()
-#     plt.savefig('translation_evaluation_analysis.png')
-#     plt.close()
-
 if __name__ == "__main__":
-    # 批量评估并生成可视化
-    results_df = process_excel_batch()
-    # visualize_results(results_df)
+    # 批量评估
+    results_df = process_excel_batch(evaluate_prompt)
     
     # 打印统计摘要
     print("\n=== 评估统计摘要 ===")
     print(f"总评估数量: {len(results_df)}")
-    print("\n平均分数:")
-    print(f"人工翻译: {results_df['Human Score'].mean():.2f}")
-    print(f"谷歌翻译: {results_df['Google Score'].mean():.2f}")
-    print(f"\n更好的翻译来源统计:\n{results_df['Better Translation'].value_counts()}")
     print("\n评估完成，结果已保存到 evaluation_results.xlsx")
-    print("可视化结果已保存到 translation_evaluation_analysis.png")

@@ -112,4 +112,4 @@ if __name__ == "__main__":
     # 打印统计摘要
     print("\n=== 评估统计摘要 ===")
     print(f"总评估数量: {len(results_df)}")
-    print("\n评估完成，结果已保存到 evaluation_results.xlsx")
+    print("\n评估完成，结果已保存到 ./out/evaluation_results.xlsx")

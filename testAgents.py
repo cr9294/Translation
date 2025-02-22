@@ -37,20 +37,20 @@ evaluate_prompt = ChatPromptTemplate.from_messages([
 谷歌翻译：{google_translation}
 
 评估维度：
-1. 准确性（40分）：翻译是否准确传达原文含义
-2. 流畅性（30分）：译文是否通顺自然
-3. 原意保留（30分）：是否保留了原文的语气和细节
+1. 准确性：翻译是否准确传达原文含义
+2. 流畅性：译文是否通顺自然
+3. 原意保留：是否保留了原文的语气和细节
 
-评估要求：
+评估要求:     
 1. 请独立评估每个翻译，不要互相影响
 2. 重点关注翻译的准确性和专业性
 3. 注意发现每个翻译的优点
 4. 保持客观中立的评价态度
 
 输出格式：
-大模型翻译：[总分]分（准确性[分数]，流畅性[分数]，原意保留[分数]）
-谷歌翻译：[总分]分（准确性[分数]，流畅性[分数]，原意保留[分数]）
 更好的翻译：[选择]
+大模型翻译：[总分]分
+谷歌翻译：[总分]分
 原因：[2-3句话说明各自优劣，需要具体指出用词或句式的例子]""")
 ])
 
@@ -123,7 +123,7 @@ def evaluate_translations(state: TranslationState) -> TranslationState:
 def process_excel_batch(evaluated_prompt) -> list:
     """批量处理Excel文件中的翻译评估"""
     try:
-        df = pd.read_excel('./out/test.xlsx')
+        df = pd.read_excel('./out/translations_finance_1500_google_test.xlsx')
         if df.empty:
             raise ValueError("Excel文件为空")
             
@@ -139,7 +139,7 @@ def process_excel_batch(evaluated_prompt) -> list:
             
             state = TranslationState(
                 original_text=row['Chinese'],
-                LLM_translation=row['English'],
+                LLM_translation=row['x'],
                 google_translation=row['Google English']
             )
             

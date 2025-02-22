@@ -21,7 +21,7 @@ class TranslationState(BaseModel):
 
 # 初始化 LLM
 llm = ChatOpenAI(
-    temperature=0.2, 
+    temperature=0.2,
     model_name="gpt-4o-mini",
     base_url="https://api.tu-zi.com/v1",
     api_key="sk-UdXOiiUE11esG1frq6OOTWMghQEON0DTgRs9oMPvyDzTf5Vj"
@@ -123,7 +123,7 @@ def evaluate_translations(state: TranslationState) -> TranslationState:
 def process_excel_batch(evaluated_prompt) -> list:
     """批量处理Excel文件中的翻译评估"""
     try:
-        df = pd.read_excel('./out/translations_finance_1500_google.xlsx')
+        df = pd.read_excel('./out/translations_literature_1500_google_test.xlsx')
         if df.empty:
             raise ValueError("Excel文件为空")
             
@@ -155,7 +155,7 @@ def process_excel_batch(evaluated_prompt) -> list:
             })
             
         results_df = pd.DataFrame(results)
-        results_df.to_excel('./out/finance_evaluation_results.xlsx', index=False)
+        results_df.to_excel('./out/literature_evaluation_results.xlsx', index=False)
         return results_df
         
     except Exception as e:
@@ -169,4 +169,4 @@ if __name__ == "__main__":
     # 打印统计摘要
     print("\n=== 评估统计摘要 ===")
     print(f"总评估数量: {len(results_df)}")
-    print("\n评估完成，结果已保存到 ./out/test_evaluation_results.xlsx")
+    print("\n评估完成，结果已保存到 ./out/literature_evaluation_results.xlsx")

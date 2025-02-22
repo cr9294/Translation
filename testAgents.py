@@ -46,6 +46,7 @@ evaluate_prompt = ChatPromptTemplate.from_messages([
 2. 重点关注翻译的准确性和专业性
 3. 注意发现每个翻译的优点
 4. 保持客观中立的评价态度
+5. 两个翻译优秀程度尽量可以做到6：4的比例
 
 输出格式：
 更好的翻译：[选择]
@@ -123,7 +124,7 @@ def evaluate_translations(state: TranslationState) -> TranslationState:
 def process_excel_batch(evaluated_prompt) -> list:
     """批量处理Excel文件中的翻译评估"""
     try:
-        df = pd.read_excel('./out/translations_literature_1500_google_test.xlsx')
+        df = pd.read_excel('./out/translations_literature_1500_google_2_test.xlsx')
         if df.empty:
             raise ValueError("Excel文件为空")
             

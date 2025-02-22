@@ -83,11 +83,11 @@ def process_translations(file_path: str):
         results.append(result["translation"])  # 使用字典索引而不是属性访问
     
     df['English'] = results
-    filename = "./out/translations_film_1500.xlsx"
+    filename = "./out/translations_literature_1500.xlsx"
     df.to_excel(filename, index=False)
     print(f"翻译完成，结果已保存到 {filename}")
 
 translator = translate_prompt | llm
 
 if __name__ == "__main__":
-    process_translations("./out/film_1500.xlsx")  # 替换为实际的Excel文件路径
+    process_translations("./out/literature_1500.xlsx")  # 替换为实际的Excel文件路径

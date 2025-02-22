@@ -27,9 +27,9 @@ def truncate_content(content, max_length=1000):
     return content[:last_period + 1]
 
 # 加载数据集，使用流式加载
-# ds = load_dataset("BAAI/IndustryCorpus2_finance_economics", streaming=True)
+ds = load_dataset("BAAI/IndustryCorpus2_finance_economics", streaming=True)
 # ds = load_dataset("BAAI/IndustryCorpus2_film_entertainment", streaming=True)
-ds = load_dataset("BAAI/IndustryCorpus2_literature_emotion", streaming=True)
+# ds = load_dataset("BAAI/IndustryCorpus2_literature_emotion", streaming=True)
 
 # 只获取前8000条数据进行处理
 initial_data = list(ds['train'].take(8000))
@@ -65,7 +65,7 @@ for item in initial_data:
 # 转换为DataFrame
 df = pd.DataFrame(filtered_contents)
 
-filename = './out/literature_1500.xlsx'
+filename = './out/finance_1500.xlsx'
 # 保存为Excel文件
 df.to_excel(filename, index=False)
 print(f"{filename}")

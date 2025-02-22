@@ -31,6 +31,11 @@ llm = ChatOpenAI(
 evaluate_prompt = ChatPromptTemplate.from_messages([
     ("system", """你是一位专业的中英互译评估专家。请基于以下多个维度对比评估两个翻译版本：
 
+原文：{original_text}
+
+大模型翻译：{LLM_translation}
+谷歌翻译：{google_translation}
+
 评估维度：
 1. 准确性（40分）：翻译是否准确传达原文含义
 2. 流畅性（30分）：译文是否通顺自然
@@ -46,85 +51,116 @@ evaluate_prompt = ChatPromptTemplate.from_messages([
 大模型翻译：[总分]分（准确性[分数]，流畅性[分数]，原意保留[分数]）
 谷歌翻译：[总分]分（准确性[分数]，流畅性[分数]，原意保留[分数]）
 更好的翻译：[选择]
-原因：[2-3句话说明各自优劣，需要具体指出用词或句式的例子]"""),
+原因：[2-3句话说明各自优劣，需要具体指出用词或句式的例子]""")
 ])
+
+# 添加evaluator定义
 evaluator = evaluate_prompt | llm
 
 def parse_evaluation(evaluation_text: str) -> Tuple[float, float, str]:
     """解析评估文本，提取分数和结论"""
-    # 提取分数（查找形如"大模型翻译：85分"和"谷歌翻译：90分"的模式）
-    llm_score_match = re.search(r'大模型翻译：(\d+)分', evaluation_text)
-    google_score_match = re.search(r'谷歌翻译：(\d+)分', evaluation_text)
-    
-    llm_score = float(llm_score_match.group(1)) if llm_score_match else 0
-    google_score = float(google_score_match.group(1)) if google_score_match else 0
-    
-    # 判断哪个更好（查找明确的结论陈述）
-    if "大模型翻译" in evaluation_text.split("更好的翻译：")[1].split("\n")[0]:
-        better = "大模型翻译"
-    else:
-        better = "谷歌翻译"
-    
-    return llm_score, google_score, better
+    try:
+        # 提取分数（查找形如"大模型翻译：85分"和"谷歌翻译：90分"的模式）
+        llm_score_match = re.search(r'大模型翻译：(\d+)分', evaluation_text)
+        google_score_match = re.search(r'谷歌翻译：(\d+)分', evaluation_text)
+        
+        llm_score = float(llm_score_match.group(1)) if llm_score_match else 0
+        google_score = float(google_score_match.group(1)) if google_score_match else 0
+        
+        # 更安全地判断哪个更好
+        better_parts = evaluation_text.split("更好的翻译：")
+        if len(better_parts) > 1:
+            conclusion = better_parts[1].split("\n")[0].strip()
+            if "大模型" in conclusion:
+                better = "大模型翻译"
+            else:
+                better = "谷歌翻译"
+        else:
+            # 如果没有明确结论，根据分数决定
+            better = "大模型翻译" if llm_score >= google_score else "谷歌翻译"
+        
+        return llm_score, google_score, better
+        
+    except Exception as e:
+        print(f"解析评估结果时出错: {str(e)}")
+        print(f"评估文本: {evaluation_text}")
+        # 返回默认值
+        return 0, 0, "谷歌翻译"
 
 def evaluate_translations(state: TranslationState) -> TranslationState:
     """评估翻译质量并返回更新后的状态"""
-    # 构建评估上下文
     evaluation_context = {
         "original_text": state.original_text,
         "LLM_translation": state.LLM_translation,
         "google_translation": state.google_translation
     }
     
-    result = evaluator.invoke(evaluation_context)
-    evaluation_text = result.content
-    
-    # 解析评估结果
-    llm_score, google_score, better = parse_evaluation(evaluation_text)
-    
-    # 更新状态
-    state.evaluation_feedback = evaluation_text
-    state.LLM_score = llm_score
-    state.google_score = google_score
-    state.better_translation = state.LLM_translation if better == "大模型翻译" else state.google_translation
+    # 确保所有必需的字段都有值
+    if not all(evaluation_context.values()):
+        print("警告：存在空的翻译字段")
+        print(evaluation_context)
+        return state
+        
+    try:
+        result = evaluator.invoke(evaluation_context)
+        evaluation_text = result.content
+        
+        # 解析评估结果
+        llm_score, google_score, better = parse_evaluation(evaluation_text)
+        
+        # 更新状态
+        state.evaluation_feedback = evaluation_text
+        state.LLM_score = llm_score
+        state.google_score = google_score
+        state.better_translation = state.LLM_translation if better == "大模型翻译" else state.google_translation
+        
+    except Exception as e:
+        print(f"评估过程发生错误: {str(e)}")
+        state.evaluation_feedback = f"评估失败: {str(e)}"
     
     return state
 
 def process_excel_batch(evaluated_prompt) -> list:
     """批量处理Excel文件中的翻译评估"""
-    df = pd.read_excel('./out/test.xlsx')
-    results = []
-    
-    # 获取指令文本
-    prompt_text = """
-                    请将以下中文文本直译成英文。
-                    要求：
-                    1. 严格按照原文的字面意思进行翻译
-                    2. 保持原文的语序结构
-                    3. 不要添加任何解释或意译
-                    4. 确保每个词语都得到准确对应的翻译
-                  """
-
-    for _, row in df.iterrows():
-        state = TranslationState(
-            original_text=row['Chinese'],
-            LLM_translation=row['English'],
-            google_translation=row['Google English']
-        )
+    try:
+        df = pd.read_excel('./out/test.xlsx')
+        if df.empty:
+            raise ValueError("Excel文件为空")
+            
+        print(f"成功读取Excel文件，共{len(df)}行数据")
+        print("列名:", df.columns.tolist())
         
-        evaluated_state = evaluate_translations(state)
+        results = []
+        for idx, row in df.iterrows():
+            print(f"\n处理第{idx+1}条数据:")
+            print(f"中文原文: {row['Chinese']}")
+            print(f"LLM翻译: {row['English']}")
+            print(f"谷歌翻译: {row['Google English']}")
+            
+            state = TranslationState(
+                original_text=row['Chinese'],
+                LLM_translation=row['English'],
+                google_translation=row['Google English']
+            )
+            
+            evaluated_state = evaluate_translations(state)
+            results.append({
+                'Original': state.original_text,
+                'LLM Translation': state.LLM_translation,
+                'Google Translation': state.google_translation,
+                'Evaluation': evaluated_state.evaluation_feedback,
+                'LLM Score': evaluated_state.LLM_score,
+                'Google Score': evaluated_state.google_score,
+                'Better Translation': evaluated_state.better_translation
+            })
+            
+        results_df = pd.DataFrame(results)
+        results_df.to_excel('./out/test_evaluation_results.xlsx', index=False)
+        return results_df
         
-        results.append({
-            'Prompt': prompt_text,  # 只存储指令文本
-            'Original': state.original_text,
-            'LLM Translation': state.LLM_translation,
-            'Google Translation': state.google_translation,
-            'Evaluation': state.evaluation_feedback,
-        })
-
-    results_df = pd.DataFrame(results)
-    results_df.to_excel('./out/test_evaluation_results.xlsx', index=False)
-    return results_df
+    except Exception as e:
+        print(f"处理过程发生错误: {str(e)}")
+        return pd.DataFrame()
 
 if __name__ == "__main__":
     # 批量评估

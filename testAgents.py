@@ -24,7 +24,7 @@ llm = ChatOpenAI(
     temperature=0.2,
     model_name="gpt-4o-mini",
     base_url="https://api.tu-zi.com/v1",
-    api_key="sk-UdXOiiUE11esG1frq6OOTWMghQEON0DTgRs9oMPvyDzTf5Vj"
+    api_key=""
 )
 
 # 修改评估提示词

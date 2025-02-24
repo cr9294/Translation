@@ -15,7 +15,7 @@ llm = ChatOpenAI(
     temperature=0.2, 
     model_name="gpt-3.5-turbo-0125",
     base_url="https://api.tu-zi.com/v1",
-    api_key="sk-UdXOiiUE11esG1frq6OOTWMghQEON0DTgRs9oMPvyDzTf5Vj"
+    api_key=""
 )
 """
 # 翻译指令模板

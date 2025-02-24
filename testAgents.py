@@ -124,7 +124,7 @@ def evaluate_translations(state: TranslationState) -> TranslationState:
 def process_excel_batch(evaluated_prompt) -> list:
     """批量处理Excel文件中的翻译评估"""
     try:
-        df = pd.read_excel('./out/translations_film_1500_google_2_1.xlsx')
+        df = pd.read_excel('./out/finance_2.xlsx')
         if df.empty:
             raise ValueError("Excel文件为空")
             
@@ -156,7 +156,7 @@ def process_excel_batch(evaluated_prompt) -> list:
             })
             
         results_df = pd.DataFrame(results)
-        results_df.to_excel('./out/film_evaluation_results_.xlsx', index=False)
+        results_df.to_excel('./out/finance_1_evaluation_results_.xlsx', index=False)
         return results_df
         
     except Exception as e:
@@ -170,4 +170,4 @@ if __name__ == "__main__":
     # 打印统计摘要
     print("\n=== 评估统计摘要 ===")
     print(f"总评估数量: {len(results_df)}")
-    print("\n评估完成，结果已保存到 ./out/literature_evaluation_results.xlsx")
+    print("\n评估完成，结果已保存到 ./out/finance_1_evaluation_results_.xlsx")
